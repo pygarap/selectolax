@@ -733,22 +733,30 @@ cdef class LexborHTMLParser:
         >>> parser.html
         '<html><head></head><body><div><span></span></div></body></html>'
         """
-        cdef lxb_html_element_t* element
         cdef lxb_dom_node_t* dom_node
+        cdef size_t tag_len
         if not tag:
             raise SelectolaxError("Tag name cannot be empty")
         pybyte_name = tag.encode('UTF-8')
 
-        element = lxb_html_document_create_element(
-            self.document,
-            <const lxb_char_t *> pybyte_name,
-            len(pybyte_name),
-            NULL
-        )
+        tag_len = len(pybyte_name)
 
-        if element == NULL:
+        with nogil:
+            dom_node = self._create_node(<const lxb_char_t *> pybyte_name, tag_len)
+
+        if dom_node == NULL:
             raise SelectolaxError(f"Can't create element for tag '{tag}'")
 
-        dom_node = <lxb_dom_node_t *> element
-
         return LexborNode.new(dom_node, self)
+
+    cdef inline lxb_dom_node_t* _create_node(self, const lxb_char_t* tag_ptr, size_t tag_len) nogil:
+        cdef lxb_html_element_t* element
+        element = lxb_html_document_create_element(
+            self.document,
+            tag_ptr,
+            tag_len,
+            NULL
+        )
+        if element == NULL:
+            return NULL
+        return <lxb_dom_node_t *> element
