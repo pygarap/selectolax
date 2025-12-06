@@ -281,7 +281,7 @@ cdef class LexborHTMLParser:
     @staticmethod
     cdef LexborHTMLParser from_document(lxb_html_document_t * document, bytes raw_html)
     cdef inline lxb_html_document_t* main_document(self) nogil
-    cdef inline lxb_dom_node_t * _create_node(self, const lxb_char_t * tag_ptr, size_t tag_len) nogil
+    cdef inline lxb_dom_node_t * _create_element_node(self, bytes tag_name) nogil
 
 cdef extern from "lexbor/dom/dom.h" nogil:
     ctypedef enum lexbor_action_t:

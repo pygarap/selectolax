@@ -3,14 +3,14 @@ include "../utils.pxi"
 import re
 
 
-def create_tag(tag: str):
+def create_tag(tag_name: str):
     """
     Given an HTML tag name, e.g. `"div"`, create a single empty node for that tag,
     e.g. `"<div></div>"`.
 
-    Use `LexborHTMLParser().create_node(..)` if you need to create a node tied to a specific parser instance.
+    Use `LexborHTMLParser.create_node(..)` if you need to create a node tied to a specific parser instance.
     """
-    return LexborHTMLParser(f"<{tag}></{tag}>", is_fragment=True).root
+    return LexborHTMLParser("", is_fragment=True).create_element_node(tag_name)
 
 
 def parse_fragment(html: str):
@@ -21,7 +21,7 @@ def parse_fragment(html: str):
     For contrast, HTMLParser adds `<html>`, `<head>`, and `<body>` tags
     if they are missing. This function does not add these tags.
     """
-    return do_parse_fragment(html, LexborHTMLParser)
+    return LexborHTMLParser(html, is_fragment=True)
 
 
 def extract_html_comment(text: str) -> str:
