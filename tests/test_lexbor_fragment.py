@@ -498,3 +498,23 @@ def test_fragment_create_node_empty_tag_name():
         assert False, "Should have raised an exception"
     except SelectolaxError:
         pass
+
+
+def test_create_element_node_children_and_attributes_fragment():
+    parser = LexborHTMLParser("<span></span>", is_fragment=True)
+    strong_tag = parser.create_element_node("strong", "World")
+    p_tag = parser.create_element_node("p", "Hello ", "!")
+    div_tag = parser.create_element_node(
+        "div",
+        "[ ",
+        p_tag,
+        " ]",
+        draggable="true",
+        translate="no",
+        contenteditable="true",
+        tabindex="3",
+    )
+    parser.root.insert_child(div_tag)
+    expected_html = '<span><div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div></span>'
+    actual_html = parser.html
+    assert actual_html == expected_html

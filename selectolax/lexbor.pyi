@@ -827,7 +827,9 @@ class LexborHTMLParser:
 
     raw_html: bytes
 
-    def __init__(self, html: str | bytes, is_fragment: bool = False) -> None:
+    def __init__(
+        self, html: str | bytes | None = None, *, is_fragment: bool = False
+    ) -> None:
         """Create a parser and load HTML.
 
         Parameters
@@ -881,6 +883,10 @@ class LexborHTMLParser:
             Root of the parsed document, or ``None`` if unavailable.
         """
         ...
+
+    @root.setter
+    def root(self, node: LexborNode) -> None:
+        """"""
 
     @property
     def body(self) -> LexborNode | None:
@@ -1255,7 +1261,7 @@ class LexborHTMLParser:
         """
         ...
 
-    def create_element_node(self, tag_name: str) -> LexborNode:
+    def create_element_node(self, tag_name: str, *children, **attributes) -> LexborNode:
         """Given an HTML tag name, e.g. `"div"`, create a single empty node for that tag,
         e.g. `"<div></div>"`.
 

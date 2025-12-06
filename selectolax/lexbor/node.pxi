@@ -114,7 +114,6 @@ cdef class LexborNode:
         lxb_str = lexbor_str_create()
         if self._is_fragment_root:
             status = serialize_fragment(self.node, lxb_str)
-            # status = lxb_html_serialize_tree_str(self.node, lxb_str)
         else:
             status = lxb_html_serialize_tree_str(self.node, lxb_str)
         if status == 0 and lxb_str.data:

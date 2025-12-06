@@ -24,7 +24,7 @@ cdef class LexborHTMLParser:
 
     html : str (unicode) or bytes
     """
-    def __init__(self, html: str | bytes, is_fragment: bool = False):
+    def __init__(self, html: str | bytes | None = None, *, is_fragment: bool = False):
         """Create a parser and load HTML.
 
         Parameters
@@ -51,9 +51,13 @@ cdef class LexborHTMLParser:
         self._fragment_document = NULL
         self._selector = None
         self._new_html_document()
-        bytes_html, html_len = preprocess_input(html)
-        self._parse_html(bytes_html, html_len)
-        self.raw_html = bytes_html
+        if html:
+            bytes_html, html_len = preprocess_input(html)
+            self._parse_html(bytes_html, html_len)
+            self.raw_html = bytes_html
+        else:
+            self.raw_html = bytes()
+            self._root = None
 
     cdef inline lxb_html_document_t* main_document(self) nogil:
         if self._is_fragment:
@@ -233,9 +237,8 @@ cdef class LexborHTMLParser:
         LexborNode or None
             Root of the parsed document, or ``None`` if unavailable.
         """
-        if self.document == NULL:
+        if self.document == NULL or self._root is None:
             return None
-        cdef LexborNode  node
         cdef lxb_dom_node_t* dom_root
         if self._is_fragment and self._fragment_document != NULL:
             dom_root = lxb_dom_document_root(&self._fragment_document.dom_document)
@@ -243,10 +246,14 @@ cdef class LexborHTMLParser:
             dom_root = lxb_dom_document_root(&self.document.dom_document)
         if dom_root == NULL:
             return None
-        node =  LexborNode.new(dom_root, self)
+        self._root = LexborNode.new(dom_root, self)
         if self._is_fragment:
-            node.set_as_fragment_root()
-        return node
+            self._root.set_as_fragment_root()
+        return self._root
+
+    @root.setter
+    def root(self, LexborNode node) -> None:
+        self._root = node
 
     @property
     def body(self):
@@ -705,53 +712,37 @@ cdef class LexborHTMLParser:
         """
         self.root.inner_html = html
 
-    def create_element_node(self, tag_name: str) -> LexborNode:
-        """Given an HTML tag name, e.g. `"div"`, create a single empty node for that tag,
-        e.g. `"<div></div>"`.
+    def create_element_node(self, tag_name: str, *children, **attributes) -> LexborNode:
+        cdef LexborNode element_node
+        element_node = self._create_element_node(tag_name)
+        for attr_name, attr_value in attributes.items():
+            element_node.attrs[attr_name] = attr_value
+        for child_node in children:
+            element_node.insert_child(child_node)
+        return element_node
 
-        Parameters
-        ----------
-        tag_name : str
-            Name of the tag to create.
-
-        Returns
-        -------
-        LexborNode
-            Newly created element node.
-        Raises
-        ------
-        SelectolaxError
-            If the element cannot be created.
-
-        Examples
-        --------
-        >>> parser = LexborHTMLParser("<div></div>")
-        >>> new_node = parser.create_element_node("span")
-        >>> new_node.tag_name
-        'span'
-        >>> parser.root.append_child(new_node)
-        >>> parser.html
-        '<html><head></head><body><div><span></span></div></body></html>'
-        """
+    def _create_element_node(self, tag_name: str) -> LexborNode:
         cdef lxb_dom_node_t* dom_node
+        cdef bytes tag_name_bytes
+        cdef const lxb_char_t* tag_ptr
+        cdef size_t tag_len
         if not tag_name:
             raise SelectolaxError("Tag name cannot be empty")
+
         tag_name_bytes = tag_name.encode('UTF-8')
+        tag_ptr = <const lxb_char_t *> tag_name_bytes
+        tag_len = len(tag_name_bytes)
+
         with nogil:
-            dom_node = self._create_element_node(tag_name_bytes)
+            dom_node = self._document_create_element(tag_ptr, tag_len)
 
         if dom_node == NULL:
             raise SelectolaxError(f"Can't create element for tag '{tag_name}'")
 
         return LexborNode.new(dom_node, self)
 
-    cdef inline lxb_dom_node_t* _create_element_node(self, bytes tag_name) nogil:
-        cdef const lxb_char_t* tag_ptr
-        cdef const size_t tag_len
+    cdef inline lxb_dom_node_t* _document_create_element(self, const lxb_char_t* tag_ptr, size_t tag_len) nogil:
         cdef lxb_html_element_t* element
-
-        tag_ptr = <const lxb_char_t *> tag_name
-        tag_len = sizeof(tag_ptr)
 
         element = lxb_html_document_create_element(
             self.document,
