@@ -1254,14 +1254,15 @@ class LexborHTMLParser:
         None
         """
         ...
-    def create_node(self, tag: str) -> LexborNode:
+
+    def create_element_node(self, tag_name: str) -> LexborNode:
         """Given an HTML tag name, e.g. `"div"`, create a single empty node for that tag,
         e.g. `"<div></div>"`.
 
 
         Parameters
         ----------
-        tag : str
+        tag_name : str
             Name of the tag to create.
 
         Returns
@@ -1276,7 +1277,7 @@ class LexborHTMLParser:
         Examples
         --------
         >>> parser = LexborHTMLParser("<div></div>")
-        >>> new_node = parser.create_node("span")
+        >>> new_node = parser.create_element_node("span")
         >>> new_node.tag_name
         'span'
         >>> parser.css_first("div").append_child(new_node)

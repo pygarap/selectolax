@@ -705,13 +705,13 @@ cdef class LexborHTMLParser:
         """
         self.root.inner_html = html
 
-    def create_node(self, str tag):
+    def create_element_node(self, tag_name: str) -> LexborNode:
         """Given an HTML tag name, e.g. `"div"`, create a single empty node for that tag,
         e.g. `"<div></div>"`.
 
         Parameters
         ----------
-        tag : str
+        tag_name : str
             Name of the tag to create.
 
         Returns
@@ -726,7 +726,7 @@ cdef class LexborHTMLParser:
         Examples
         --------
         >>> parser = LexborHTMLParser("<div></div>")
-        >>> new_node = parser.create_node("span")
+        >>> new_node = parser.create_element_node("span")
         >>> new_node.tag_name
         'span'
         >>> parser.root.append_child(new_node)
@@ -734,23 +734,24 @@ cdef class LexborHTMLParser:
         '<html><head></head><body><div><span></span></div></body></html>'
         """
         cdef lxb_dom_node_t* dom_node
-        cdef size_t tag_len
-        if not tag:
-            raise SelectolaxError("Tag name cannot be empty")
-        pybyte_name = tag.encode('UTF-8')
-
-        tag_len = len(pybyte_name)
-
+        tag_name_bytes = tag_name.encode('UTF-8')
         with nogil:
-            dom_node = self._create_node(<const lxb_char_t *> pybyte_name, tag_len)
+            dom_node = self._create_node(tag_name_bytes)
 
         if dom_node == NULL:
-            raise SelectolaxError(f"Can't create element for tag '{tag}'")
+            raise SelectolaxError(f"Can't create element for tag '{tag_name}'")
 
         return LexborNode.new(dom_node, self)
 
-    cdef inline lxb_dom_node_t* _create_node(self, const lxb_char_t* tag_ptr, size_t tag_len) nogil:
+    cdef inline lxb_dom_node_t* _create_node(self, bytes tag_name) nogil:
+        cdef const lxb_char_t* tag_ptr
+        cdef const size_t tag_len
         cdef lxb_html_element_t* element
+        if not tag_name:
+            raise SelectolaxError("Tag name cannot be empty")
+        tag_ptr = <const lxb_char_t *> tag_name
+        tag_len = sizeof(tag_ptr)
+
         element = lxb_html_document_create_element(
             self.document,
             tag_ptr,

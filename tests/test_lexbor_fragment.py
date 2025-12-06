@@ -451,7 +451,7 @@ def test_fragment_mixed_content():
 def test_fragment_create_node_basic():
     parser = LexborHTMLParser("<div></div>", is_fragment=True)
     assert parser.root is not None
-    new_node = parser.create_node("span")
+    new_node = parser.create_element_node("span")
     assert new_node.tag == "span"
     assert new_node.parent is None
 
@@ -467,7 +467,7 @@ def test_fragment_create_node_different_tags():
 
     tags_to_test = ["p", "span", "div", "h1", "custom-tag"]
     for tag in tags_to_test:
-        new_node = parser.create_node(tag)
+        new_node = parser.create_element_node(tag)
         assert new_node.tag == tag
         root.insert_child(new_node)
 
@@ -480,7 +480,7 @@ def test_fragment_create_node_different_tags():
 def test_fragment_create_node_with_attributes():
     parser = LexborHTMLParser("<div></div>", is_fragment=True)
     assert parser.root is not None
-    new_node = parser.create_node("a")
+    new_node = parser.create_element_node("a")
     new_node.attrs["href"] = "https://example.com"
     new_node.attrs["class"] = "link"
 
@@ -494,7 +494,7 @@ def test_fragment_create_node_with_attributes():
 def test_fragment_create_node_empty_tag_name():
     parser = LexborHTMLParser("<div></div>", is_fragment=True)
     try:
-        parser.create_node("")
+        parser.create_element_node("")
         assert False, "Should have raised an exception"
     except SelectolaxError:
         pass
