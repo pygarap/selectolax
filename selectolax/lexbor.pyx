@@ -52,6 +52,10 @@ cdef class LexborHTMLParser:
         self._selector = None
         self._root = None
         self._new_html_document()
+        if html == "" or html == b"":
+            raise ValueError("HTML content, cannot be empty.")
+        if html is None and is_fragment is False:
+            html = ""
         if html is not None:
             bytes_html, html_len = preprocess_input(html)
             self._parse_html(<char *> bytes_html, <size_t> html_len)
@@ -239,7 +243,7 @@ cdef class LexborHTMLParser:
         """
         if self._root is not None:
             return self._root
-        if self.document == NULL or not self.raw_html:
+        if self.document == NULL or (self._is_fragment and not self.raw_html):
             return None
         cdef lxb_dom_node_t* dom_root
         if self._is_fragment and self._fragment_document != NULL:

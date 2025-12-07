@@ -17,8 +17,6 @@ FRAGMENT = Literal[
 
 
 def preprocess_input(html: str | bytes, decode_errors: str = 'ignore') -> tuple[bytes, int]:
-    # if not html:
-    #     raise ValueError("HTML, cannot be empty.")
     if isinstance(html, (str, unicode)):
         bytes_html = html.encode('UTF-8', errors=decode_errors)
     elif isinstance(html, bytes):

@@ -1,6 +1,7 @@
 from inspect import cleandoc
 import pytest
 from selectolax.lexbor import LexborHTMLParser, SelectolaxError
+from tests.test_lexbor import full_match
 
 
 def clean_doc(text: str) -> str:
@@ -503,7 +504,7 @@ def test_fragment_create_node_empty_tag_name():
 def test_create_element_node_children_and_attributes_fragment():
     parser = LexborHTMLParser("<span></span>", is_fragment=True)
     strong_tag = parser.create_tag("strong", "World")
-    p_tag = parser.create_tag("p", "Hello ", "!")
+    p_tag = parser.create_tag("p", "Hello ", strong_tag, "!")
     div_tag = parser.create_tag(
         "div",
         "[ ",
@@ -515,7 +516,7 @@ def test_create_element_node_children_and_attributes_fragment():
         tabindex="3",
     )
     parser.root.insert_child(div_tag)
-    expected_html = '<span><div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div></span>'
+    expected_html = '<span><div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello <strong>World</strong>!</p> ]</div></span>'
     actual_html = parser.html
     assert actual_html == expected_html
 
@@ -523,7 +524,7 @@ def test_create_element_node_children_and_attributes_fragment():
 def test_create_element_node_children_and_attributes_with_empty_parser_for_fragment_parser():
     parser = LexborHTMLParser(is_fragment=True)
     strong_tag = parser.create_tag("strong", "World")
-    p_tag = parser.create_tag("p", "Hello ", "!")
+    p_tag = parser.create_tag("p", "Hello ", strong_tag, "!")
     div_tag = parser.create_tag(
         "div",
         "[ ",
@@ -535,7 +536,7 @@ def test_create_element_node_children_and_attributes_with_empty_parser_for_fragm
         tabindex="3",
     )
     parser.root = div_tag
-    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
+    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello <strong>World</strong>!</p> ]</div>'
     actual_html = parser.html
     assert actual_html == expected_html
 
@@ -543,7 +544,7 @@ def test_create_element_node_children_and_attributes_with_empty_parser_for_fragm
 def test_create_root_children_and_attributes_for_fragment_parser():
     parser = LexborHTMLParser(is_fragment=True)
     strong_tag = parser.create_tag("strong", "World")
-    p_tag = parser.create_tag("p", "Hello ", "!")
+    p_tag = parser.create_tag("p", "Hello ", strong_tag, "!")
     parser.create_root(
         "div",
         "[ ",
@@ -554,6 +555,22 @@ def test_create_root_children_and_attributes_for_fragment_parser():
         contenteditable="true",
         tabindex="3",
     )
-    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
+    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello <strong>World</strong>!</p> ]</div>'
     actual_html = parser.html
     assert actual_html == expected_html
+
+def test_empty_html_parser():
+    with pytest.raises(
+        ValueError,
+        match=full_match("HTML content, cannot be empty."),
+    ):
+        parser = LexborHTMLParser("", is_fragment=True)
+
+
+def test_empty_parser():
+    parser = LexborHTMLParser(is_fragment=True)
+    assert parser.root is None
+    assert parser.html is None
+    assert parser.inner_html is None
+    assert parser.body is None
+    assert parser.head is None

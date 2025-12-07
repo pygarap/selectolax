@@ -34,10 +34,31 @@ def test_sets_inner_html():
 
 
 def test_checking_attributes_does_not_segfault():
-    parser = LexborHTMLParser("")
+    parser = LexborHTMLParser()
     root_node = parser.root
-    assert root_node is None
-    assert parser.html == ""
+    assert root_node is not None
+    for node in root_node.traverse():
+        parent = node.parent
+        assert parent is not None
+        parent = parent.attributes.get("anything")
+    assert parser.html == '<html><head></head><body></body></html>'
+
+
+def test_empty_html_parser():
+    with pytest.raises(
+        ValueError,
+        match=full_match("HTML content, cannot be empty."),
+    ):
+        parser = LexborHTMLParser("")
+
+
+def test_empty_parser():
+    parser = LexborHTMLParser()
+    assert parser.root is not None
+    assert parser.head is not None
+    assert parser.body is not None
+    assert parser.html == parser.root.html == '<html><head></head><body></body></html>'
+    assert parser.inner_html == '<head></head><body></body>'
 
 
 def test_node_cloning():
@@ -780,7 +801,7 @@ def test_create_element_node_children_and_attributes():
     )
     parser = LexborHTMLParser(html)
     strong_tag = parser.create_tag("strong", "World")
-    p_tag = parser.create_tag("p", "Hello ", "!")
+    p_tag = parser.create_tag("p", "Hello ", strong_tag, "!")
     div_tag = parser.create_tag(
         "div",
         "[ ",
@@ -798,7 +819,7 @@ def test_create_element_node_children_and_attributes():
   <body>
     <!-- Body -->
   \n
-<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div></body></html>"""
+<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello <strong>World</strong>!</p> ]</div></body></html>"""
     actual_html = parser.html
     assert actual_html == expected_html
 
