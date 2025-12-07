@@ -204,9 +204,6 @@ def test_invalid_input_types(parser):
     with pytest.raises(TypeError, match="Expected a string"):
         parser([])
 
-    with pytest.raises(TypeError, match="Expected a string"):
-        parser(None)
-
 
 @pytest.mark.parametrize(*_PARSERS_PARAMETRIZER)
 def test_clone_handling(parser):

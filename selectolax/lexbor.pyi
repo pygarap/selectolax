@@ -1261,6 +1261,9 @@ class LexborHTMLParser:
         """
         ...
 
+    def create_root(self, tag_name: str, *children, **attributes) -> None:
+        """"""
+
     def create_element_node(self, tag_name: str, *children, **attributes) -> LexborNode:
         """Given an HTML tag name, e.g. `"div"`, create a single empty node for that tag,
         e.g. `"<div></div>"`.

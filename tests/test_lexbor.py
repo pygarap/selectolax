@@ -815,12 +815,24 @@ def test_create_element_node_children_and_attributes_with_empty_parser():
         tabindex="3",
     )
     parser.root = div_tag
-    expected_html = """<!DOCTYPE html><html lang="en"><head>
-    <!-- Head -->
-  </head>
-  <body>
-    <!-- Body -->
-  \n
-<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div></body></html>"""
+    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
+    actual_html = parser.html
+    assert actual_html == expected_html
+
+def test_create_root_children_and_attributes():
+    parser = LexborHTMLParser(is_fragment=True)
+    strong_tag = parser.create_element_node("strong", "World")
+    p_tag = parser.create_element_node("p", "Hello ", "!")
+    parser.create_root(
+        "div",
+        "[ ",
+        p_tag,
+        " ]",
+        draggable="true",
+        translate="no",
+        contenteditable="true",
+        tabindex="3",
+    )
+    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
     actual_html = parser.html
     assert actual_html == expected_html

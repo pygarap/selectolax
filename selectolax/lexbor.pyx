@@ -50,14 +50,14 @@ cdef class LexborHTMLParser:
         self._is_fragment = is_fragment
         self._fragment_document = NULL
         self._selector = None
+        self._root = None
         self._new_html_document()
-        if html:
+        if html is not None:
             bytes_html, html_len = preprocess_input(html)
-            self._parse_html(bytes_html, html_len)
+            self._parse_html(<char *> bytes_html, <size_t> html_len)
             self.raw_html = bytes_html
         else:
             self.raw_html = bytes()
-            self._root = None
 
     cdef inline lxb_html_document_t* main_document(self) nogil:
         if self._is_fragment:
@@ -237,7 +237,10 @@ cdef class LexborHTMLParser:
         LexborNode or None
             Root of the parsed document, or ``None`` if unavailable.
         """
-        if self.document == NULL or self._root is None:
+        if self._root is not None:
+            return self._root
+        # if self.document == NULL or not self.raw_html:
+        if self.document == NULL:
             return None
         cdef lxb_dom_node_t* dom_root
         if self._is_fragment and self._fragment_document != NULL:
@@ -254,6 +257,8 @@ cdef class LexborHTMLParser:
     @root.setter
     def root(self, LexborNode node) -> None:
         self._root = node
+        if self._is_fragment:
+            self._root.set_as_fragment_root()
 
     @property
     def body(self):
@@ -711,6 +716,11 @@ cdef class LexborHTMLParser:
         None
         """
         self.root.inner_html = html
+
+    def create_root(self, tag_name: str, *children, **attributes) -> None:
+        cdef LexborNode element_node
+        element_node = self.create_element_node(tag_name, *children, **attributes)
+        self.root = element_node
 
     def create_element_node(self, tag_name: str, *children, **attributes) -> LexborNode:
         cdef LexborNode element_node
