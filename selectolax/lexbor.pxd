@@ -268,6 +268,7 @@ cdef class LexborCSSSelector:
 cdef class LexborHTMLParser:
     cdef lxb_html_document_t *document
     cdef lxb_html_document_t *_fragment_document
+    cdef LexborNode _root
     cdef bint _is_fragment
     cdef public bytes raw_html
     cdef LexborCSSSelector _selector
@@ -281,6 +282,7 @@ cdef class LexborHTMLParser:
     @staticmethod
     cdef LexborHTMLParser from_document(lxb_html_document_t * document, bytes raw_html)
     cdef inline lxb_html_document_t* main_document(self) nogil
+    cdef inline lxb_dom_node_t * _document_create_element(self, const lxb_char_t *tag_ptr, size_t tag_len) nogil
 
 cdef extern from "lexbor/dom/dom.h" nogil:
     ctypedef enum lexbor_action_t:

@@ -1,13 +1,19 @@
 """Tests for functionality that is only supported by lexbor backend."""
 
 from inspect import cleandoc
+from re import escape
 
+import pytest
 
 from selectolax.lexbor import LexborHTMLParser, parse_fragment, SelectolaxError
 
 
 def clean_doc(text: str) -> str:
     return f"{cleandoc(text)}\n"
+
+
+def full_match(string: str) -> str:
+    return f"^{escape(string)}$"
 
 
 def test_reads_inner_html():
@@ -28,13 +34,31 @@ def test_sets_inner_html():
 
 
 def test_checking_attributes_does_not_segfault():
-    parser = LexborHTMLParser("")
+    parser = LexborHTMLParser()
     root_node = parser.root
     assert root_node is not None
     for node in root_node.traverse():
         parent = node.parent
         assert parent is not None
         parent = parent.attributes.get("anything")
+    assert parser.html == '<html><head></head><body></body></html>'
+
+
+def test_empty_html_parser():
+    with pytest.raises(
+        ValueError,
+        match=full_match("HTML content, cannot be empty."),
+    ):
+        parser = LexborHTMLParser("")
+
+
+def test_empty_parser():
+    parser = LexborHTMLParser()
+    assert parser.root is not None
+    assert parser.head is not None
+    assert parser.body is not None
+    assert parser.html == parser.root.html == '<html><head></head><body></body></html>'
+    assert parser.inner_html == '<head></head><body></body>'
 
 
 def test_node_cloning():
@@ -713,7 +737,7 @@ def test_clone_complex_modifications():
 
 def test_create_node_basic():
     parser = LexborHTMLParser("<div></div>")
-    new_node = parser.create_node("span")
+    new_node = parser.create_tag("span")
     assert new_node.tag == "span"
     assert new_node.parent is None
 
@@ -729,7 +753,7 @@ def test_create_node_different_tags():
 
     tags_to_test = ["p", "span", "div", "h1", "custom-tag"]
     for tag in tags_to_test:
-        new_node = parser.create_node(tag)
+        new_node = parser.create_tag(tag)
         assert new_node.tag == tag
         root.insert_child(new_node)
 
@@ -741,7 +765,7 @@ def test_create_node_different_tags():
 
 def test_create_node_with_attributes():
     parser = LexborHTMLParser("<div></div>")
-    new_node = parser.create_node("a")
+    new_node = parser.create_tag("a")
     new_node.attrs["href"] = "https://example.com"
     new_node.attrs["class"] = "link"
 
@@ -755,7 +779,57 @@ def test_create_node_with_attributes():
 def test_create_node_empty_tag_name():
     parser = LexborHTMLParser("<div></div>")
     try:
-        parser.create_node("")
+        parser.create_tag("")
         assert False, "Should have raised an exception"
     except SelectolaxError:
         pass
+
+
+def test_create_element_node_children_and_attributes():
+    html = clean_doc(
+        """
+        <!doctype html>
+        <html lang="en">
+          <head>
+            <!-- Head -->
+          </head>
+          <body>
+            <!-- Body -->
+          </body>
+        </html>
+        """
+    )
+    parser = LexborHTMLParser(html)
+    strong_tag = parser.create_tag("strong", "World")
+    p_tag = parser.create_tag("p", "Hello ", strong_tag, "!")
+    div_tag = parser.create_tag(
+        "div",
+        "[ ",
+        p_tag,
+        " ]",
+        draggable="true",
+        translate="no",
+        contenteditable="true",
+        tabindex="3",
+    )
+    parser.body.insert_child(div_tag)
+    expected_html = """<!DOCTYPE html><html lang="en"><head>
+    <!-- Head -->
+  </head>
+  <body>
+    <!-- Body -->
+  \n
+<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello <strong>World</strong>!</p> ]</div></body></html>"""
+    actual_html = parser.html
+    assert actual_html == expected_html
+
+
+def test_create_element_node_children_and_attributes_with_empty_parser():
+    parser = LexborHTMLParser()
+    with pytest.raises(
+        ValueError,
+        match=full_match(
+            "<html> tag, must be the root for a full HTML document, for other tags use: `LexborHTMLParser()`."
+        ),
+    ):
+        parser.create_root("div")
