@@ -375,7 +375,7 @@ cdef class LexborHTMLParser:
         return self.root.text(deep=deep, separator=separator, strip=strip, skip_empty=skip_empty)
 
     @property
-    def html(self):
+    def html(self) -> str | None:
         """Return HTML representation of the page.
 
         Returns

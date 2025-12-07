@@ -1231,7 +1231,7 @@ class LexborHTMLParser:
         ...
 
     @property
-    def inner_html(self) -> str:
+    def inner_html(self) -> str | None:
         """Return HTML representation of the child nodes.
 
         Works similar to innerHTML in JavaScript.
