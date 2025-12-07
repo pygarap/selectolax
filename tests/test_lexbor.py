@@ -713,7 +713,7 @@ def test_clone_complex_modifications():
 
 def test_create_node_basic():
     parser = LexborHTMLParser("<div></div>")
-    new_node = parser.create_element_node("span")
+    new_node = parser.create_tag("span")
     assert new_node.tag == "span"
     assert new_node.parent is None
 
@@ -729,7 +729,7 @@ def test_create_node_different_tags():
 
     tags_to_test = ["p", "span", "div", "h1", "custom-tag"]
     for tag in tags_to_test:
-        new_node = parser.create_element_node(tag)
+        new_node = parser.create_tag(tag)
         assert new_node.tag == tag
         root.insert_child(new_node)
 
@@ -741,7 +741,7 @@ def test_create_node_different_tags():
 
 def test_create_node_with_attributes():
     parser = LexborHTMLParser("<div></div>")
-    new_node = parser.create_element_node("a")
+    new_node = parser.create_tag("a")
     new_node.attrs["href"] = "https://example.com"
     new_node.attrs["class"] = "link"
 
@@ -755,7 +755,7 @@ def test_create_node_with_attributes():
 def test_create_node_empty_tag_name():
     parser = LexborHTMLParser("<div></div>")
     try:
-        parser.create_element_node("")
+        parser.create_tag("")
         assert False, "Should have raised an exception"
     except SelectolaxError:
         pass
@@ -776,9 +776,9 @@ def test_create_element_node_children_and_attributes():
         """
     )
     parser = LexborHTMLParser(html)
-    strong_tag = parser.create_element_node("strong", "World")
-    p_tag = parser.create_element_node("p", "Hello ", "!")
-    div_tag = parser.create_element_node(
+    strong_tag = parser.create_tag("strong", "World")
+    p_tag = parser.create_tag("p", "Hello ", "!")
+    div_tag = parser.create_tag(
         "div",
         "[ ",
         p_tag,
@@ -802,9 +802,9 @@ def test_create_element_node_children_and_attributes():
 
 def test_create_element_node_children_and_attributes_with_empty_parser():
     parser = LexborHTMLParser(is_fragment=True)
-    strong_tag = parser.create_element_node("strong", "World")
-    p_tag = parser.create_element_node("p", "Hello ", "!")
-    div_tag = parser.create_element_node(
+    strong_tag = parser.create_tag("strong", "World")
+    p_tag = parser.create_tag("p", "Hello ", "!")
+    div_tag = parser.create_tag(
         "div",
         "[ ",
         p_tag,
@@ -821,8 +821,8 @@ def test_create_element_node_children_and_attributes_with_empty_parser():
 
 def test_create_root_children_and_attributes():
     parser = LexborHTMLParser(is_fragment=True)
-    strong_tag = parser.create_element_node("strong", "World")
-    p_tag = parser.create_element_node("p", "Hello ", "!")
+    strong_tag = parser.create_tag("strong", "World")
+    p_tag = parser.create_tag("p", "Hello ", "!")
     parser.create_root(
         "div",
         "[ ",

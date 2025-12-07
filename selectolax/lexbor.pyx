@@ -719,10 +719,10 @@ cdef class LexborHTMLParser:
 
     def create_root(self, tag_name: str, *children, **attributes) -> None:
         cdef LexborNode element_node
-        element_node = self.create_element_node(tag_name, *children, **attributes)
+        element_node = self.create_tag(tag_name, *children, **attributes)
         self.root = element_node
 
-    def create_element_node(self, tag_name: str, *children, **attributes) -> LexborNode:
+    def create_tag(self, tag_name: str, *children, **attributes) -> LexborNode:
         cdef LexborNode element_node
         element_node = self._create_element_node(tag_name)
         for attr_name, attr_value in attributes.items():

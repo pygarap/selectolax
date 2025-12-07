@@ -1264,35 +1264,8 @@ class LexborHTMLParser:
     def create_root(self, tag_name: str, *children, **attributes) -> None:
         """"""
 
-    def create_element_node(self, tag_name: str, *children, **attributes) -> LexborNode:
-        """Given an HTML tag name, e.g. `"div"`, create a single empty node for that tag,
-        e.g. `"<div></div>"`.
-
-
-        Parameters
-        ----------
-        tag_name : str
-            Name of the tag to create.
-
-        Returns
-        -------
-        LexborNode
-            Newly created element node.
-        Raises
-        ------
-        SelectolaxError
-            If the element cannot be created.
-
-        Examples
-        --------
-        >>> parser = LexborHTMLParser("<div></div>")
-        >>> new_node = parser.create_element_node("span")
-        >>> new_node.tag_name
-        'span'
-        >>> parser.css_first("div").append_child(new_node)
-        >>> parser.html
-        '<html><head></head><body><div><span></span></div></body></html>'
-        """
+    def create_tag(self, tag_name: str, *children, **attributes) -> LexborNode:
+        """"""
 
 def create_tag(tag: str) -> LexborNode:
     """
