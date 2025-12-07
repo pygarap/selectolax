@@ -239,8 +239,7 @@ cdef class LexborHTMLParser:
         """
         if self._root is not None:
             return self._root
-        # if self.document == NULL or not self.raw_html:
-        if self.document == NULL:
+        if self.document == NULL or not self.raw_html:
             return None
         cdef lxb_dom_node_t* dom_root
         if self._is_fragment and self._fragment_document != NULL:
@@ -384,11 +383,9 @@ cdef class LexborHTMLParser:
         str or None
             Serialized HTML of the current document.
         """
-        if self.document == NULL:
+        if self.document == NULL or self.root is None:
             return None
         if self._is_fragment:
-            if self.root is None:
-                return None
             return self.root.html
         node = LexborNode.new(<lxb_dom_node_t *> &self.document.dom_document, self)
         return node.html
@@ -687,7 +684,7 @@ cdef class LexborHTMLParser:
             self.root.unwrap_tags(tags, delete_empty=delete_empty)
 
     @property
-    def inner_html(self) -> str:
+    def inner_html(self) -> str | None:
         """Return HTML representation of the child nodes.
 
         Works similar to innerHTML in JavaScript.
@@ -698,7 +695,9 @@ cdef class LexborHTMLParser:
         -------
         text : str | None
         """
-        return self.root.inner_html
+        if self.root:
+            return self.root.inner_html
+        return None
 
     @inner_html.setter
     def inner_html(self, str html):
@@ -715,10 +714,13 @@ cdef class LexborHTMLParser:
         -------
         None
         """
-        self.root.inner_html = html
+        if self.root:
+            self.root.inner_html = html
 
     def create_root(self, tag_name: str, *children, **attributes) -> None:
         cdef LexborNode element_node
+        if not self._is_fragment and tag_name.lower() != "html":
+            raise ValueError("<html> tag, must be the root for a full HTML document, for other tags use: `LexborHTMLParser()`.")
         element_node = self.create_tag(tag_name, *children, **attributes)
         self.root = element_node
 

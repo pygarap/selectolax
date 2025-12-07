@@ -1,13 +1,19 @@
 """Tests for functionality that is only supported by lexbor backend."""
 
 from inspect import cleandoc
+from re import escape
 
+import pytest
 
 from selectolax.lexbor import LexborHTMLParser, parse_fragment, SelectolaxError
 
 
 def clean_doc(text: str) -> str:
     return f"{cleandoc(text)}\n"
+
+
+def full_match(string: str) -> str:
+    return f"^{escape(string)}$"
 
 
 def test_reads_inner_html():
@@ -30,11 +36,8 @@ def test_sets_inner_html():
 def test_checking_attributes_does_not_segfault():
     parser = LexborHTMLParser("")
     root_node = parser.root
-    assert root_node is not None
-    for node in root_node.traverse():
-        parent = node.parent
-        assert parent is not None
-        parent = parent.attributes.get("anything")
+    assert root_node is None
+    assert parser.html == ""
 
 
 def test_node_cloning():
@@ -801,38 +804,11 @@ def test_create_element_node_children_and_attributes():
 
 
 def test_create_element_node_children_and_attributes_with_empty_parser():
-    parser = LexborHTMLParser(is_fragment=True)
-    strong_tag = parser.create_tag("strong", "World")
-    p_tag = parser.create_tag("p", "Hello ", "!")
-    div_tag = parser.create_tag(
-        "div",
-        "[ ",
-        p_tag,
-        " ]",
-        draggable="true",
-        translate="no",
-        contenteditable="true",
-        tabindex="3",
-    )
-    parser.root = div_tag
-    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
-    actual_html = parser.html
-    assert actual_html == expected_html
-
-def test_create_root_children_and_attributes():
-    parser = LexborHTMLParser(is_fragment=True)
-    strong_tag = parser.create_tag("strong", "World")
-    p_tag = parser.create_tag("p", "Hello ", "!")
-    parser.create_root(
-        "div",
-        "[ ",
-        p_tag,
-        " ]",
-        draggable="true",
-        translate="no",
-        contenteditable="true",
-        tabindex="3",
-    )
-    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
-    actual_html = parser.html
-    assert actual_html == expected_html
+    parser = LexborHTMLParser()
+    with pytest.raises(
+        ValueError,
+        match=full_match(
+            "<html> tag, must be the root for a full HTML document, for other tags use: `LexborHTMLParser()`."
+        ),
+    ):
+        parser.create_root("div")

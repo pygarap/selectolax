@@ -518,3 +518,42 @@ def test_create_element_node_children_and_attributes_fragment():
     expected_html = '<span><div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div></span>'
     actual_html = parser.html
     assert actual_html == expected_html
+
+
+def test_create_element_node_children_and_attributes_with_empty_parser_for_fragment_parser():
+    parser = LexborHTMLParser(is_fragment=True)
+    strong_tag = parser.create_tag("strong", "World")
+    p_tag = parser.create_tag("p", "Hello ", "!")
+    div_tag = parser.create_tag(
+        "div",
+        "[ ",
+        p_tag,
+        " ]",
+        draggable="true",
+        translate="no",
+        contenteditable="true",
+        tabindex="3",
+    )
+    parser.root = div_tag
+    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
+    actual_html = parser.html
+    assert actual_html == expected_html
+
+
+def test_create_root_children_and_attributes_for_fragment_parser():
+    parser = LexborHTMLParser(is_fragment=True)
+    strong_tag = parser.create_tag("strong", "World")
+    p_tag = parser.create_tag("p", "Hello ", "!")
+    parser.create_root(
+        "div",
+        "[ ",
+        p_tag,
+        " ]",
+        draggable="true",
+        translate="no",
+        contenteditable="true",
+        tabindex="3",
+    )
+    expected_html = '<div draggable="true" translate="no" contenteditable="true" tabindex="3">[ <p>Hello !</p> ]</div>'
+    actual_html = parser.html
+    assert actual_html == expected_html
